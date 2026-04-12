@@ -42,29 +42,21 @@ Authorization: Bearer <jwt>
   "plans": [
     {
       "id": "free",
-      "price": null,
-      "currency": "usd",
       "contact_sales": false,
       "limits": { "seats": 1, "storage_gb": 0, "namespaces": 1 }
     },
     {
       "id": "personal",
-      "price": 29.0,
-      "currency": "usd",
       "contact_sales": false,
       "limits": { "seats": 1, "storage_gb": 25, "namespaces": 20 }
     },
     {
       "id": "team",
-      "price": 99.0,
-      "currency": "usd",
       "contact_sales": false,
       "limits": { "seats": 15, "storage_gb": 500, "namespaces": null }
     },
     {
       "id": "enterprise",
-      "price": null,
-      "currency": "usd",
       "contact_sales": true,
       "limits": { "seats": null, "storage_gb": null, "namespaces": null }
     }
