@@ -20,7 +20,7 @@ Authorization: Bearer <jwt>
   "current_period_end": null,
   "limits": {
     "seats": { "max": 1, "current": 1 },
-    "storage": { "max": 52428800, "current": 1024000 },
+    "storage": { "max": 10485760, "current": 1024000 },
     "namespaces": { "max": 1, "current": 1 }
   }
 }

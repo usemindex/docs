@@ -2,13 +2,12 @@
 
 Complete API reference for [Mindex](https://usemindex.dev) — an AI-powered knowledge base for developers.
 
-## Base URLs
+## Base URL
 
 | Environment | URL |
 |-------------|-----|
-| Production | `https://api.usemindex.dev` |
+| API | `https://api.usemindex.dev` |
 | MCP Server | `https://mcp.usemindex.dev` |
-| Development | `http://localhost:3000` |
 
 ## Authentication
 
@@ -63,9 +62,9 @@ curl -X POST https://api.usemindex.dev/orgs/your-org/api_keys \
 | Plan | Requests/min |
 |------|-------------|
 | Free | 30 |
-| Personal | 120 |
-| Team | 300 |
-| Enterprise | Custom |
+| Personal | 60 |
+| Team | 120 |
+| Enterprise | 300 |
 
 Rate limit headers are included in every response:
 

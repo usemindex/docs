@@ -15,8 +15,6 @@ claude mcp add --transport http mindex https://mcp.usemindex.dev \
   --header "Authorization: Bearer sk-your-api-key"
 ```
 
-See the [MCP repository](https://github.com/usemindex/mcp) for setup guides for all tools.
-
 ## Available Tools
 
 ### mindex_search
