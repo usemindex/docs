@@ -2,6 +2,21 @@
 
 Complete API reference for [Mindex](https://usemindex.dev) — an AI-powered knowledge base for developers.
 
+## Quick Start
+
+```bash
+# Install the CLI
+curl -fsSL https://raw.githubusercontent.com/usemindex/cli/main/install.sh | sh
+
+# Authenticate
+mindex auth
+
+# Get context from your knowledge base
+mindex context "how does authentication work?"
+```
+
+> CLI docs: [github.com/usemindex/cli](https://github.com/usemindex/cli)
+
 ## Base URL
 
 | Environment | URL |
