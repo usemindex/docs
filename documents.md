@@ -11,6 +11,8 @@ POST /api/v1/:org_slug/documents
 Authorization: Bearer <jwt> | sk-xxxxx
 ```
 
+Accepts a single document via JSON, a single file via multipart, or **a batch of up to 50 files** in a single multipart request. All paths return `202 Accepted` with a `task_id` for tracking progress.
+
 ### JSON body (text content)
 
 ```json
@@ -21,7 +23,7 @@ Authorization: Bearer <jwt> | sk-xxxxx
 }
 ```
 
-### Multipart form (file upload)
+### Multipart form (single file)
 
 ```bash
 curl -X POST https://api.usemindex.dev/api/v1/my-org/documents \
@@ -30,21 +32,50 @@ curl -X POST https://api.usemindex.dev/api/v1/my-org/documents \
   -F "namespace=default"
 ```
 
+### Multipart form (batch — up to 50 files)
+
+Send multiple parts with the field name `files[]`:
+
+```bash
+curl -X POST https://api.usemindex.dev/api/v1/my-org/documents \
+  -H "Authorization: Bearer <jwt>" \
+  -F "files[]=@a.md" \
+  -F "files[]=@b.md" \
+  -F "files[]=@c.md" \
+  -F "namespace=default"
+```
+
 **Supported formats:** `.md`, `.txt`, `.markdown`, `.docx`, `.pptx`, `.xlsx`, `.pdf`, `.html`, `.htm`, `.csv`, `.json`, `.xml`
 
-**Limits:** Max 10MB per file.
+**Limits:**
+- Max 10MB per file.
+- Max 50 files per batch request. Submit additional batches sequentially for larger sets.
+- Storage cota is checked atomically across the whole batch — if the total exceeds the plan limit, the entire batch is rejected with `402` and nothing is uploaded.
 
-**Response:** `201 Created`
+**Response:** `202 Accepted`
 
 ```json
 {
-  "key": "default/my-document.md",
-  "namespace": "default",
-  "message": "Document uploaded"
+  "task_id": "abc-123",
+  "status": "processing",
+  "total": 3,
+  "namespace": "default"
 }
 ```
 
-Processing is asynchronous. Use the task status endpoint to track progress.
+Processing is asynchronous (S3 + Celery enrich). Poll `GET /documents/tasks/:task_id` for progress.
+
+### Errors
+
+| Status | Body | Cause |
+|--------|------|-------|
+| `400` | `{"error": "files or content is required"}` | empty request |
+| `422` | `{"error": "Maximum 50 files per request"}` | batch too large |
+| `422` | `{"error": "File 'X.exe' type not allowed..."}` | unsupported extension (any file in batch fails the whole request) |
+| `422` | `{"error": "File 'X.md' has invalid UTF-8 encoding"}` | non-UTF-8 in text-extension file |
+| `422` | `{"error": "File 'X' exceeds 10MB limit"}` | file too large |
+| `402` | `{"error": "Storage limit reached", "limit_type": "storage", "current": ..., "max": ..., "plan": ..., "upgrade_url": ...}` | sum of bytes exceeds plan storage cota |
+| `429` | `{"error": "Rate limit exceeded", "retry_after": 60}` | per-org request rate limit hit |
 
 ---
 
@@ -116,9 +147,9 @@ Removes the document from storage, vector DB, and knowledge graph.
 
 ---
 
-## Task Status
+## Task Status (batch progress)
 
-Check the processing status of an uploaded document.
+Track progress of an upload (single or batch) by polling its `task_id`.
 
 ```
 GET /api/v1/:org_slug/documents/tasks/:task_id
@@ -130,12 +161,30 @@ Authorization: Bearer <jwt> | sk-xxxxx
 ```json
 {
   "task_id": "abc-123",
-  "status": "completed",
-  "result": {
-    "key": "default/my-document.md",
-    "chunks": 5
-  }
+  "status": "processing",
+  "phase": "enrich",
+  "total": 50,
+  "succeeded": 32,
+  "failed": 0,
+  "processed": 32,
+  "namespace": "default",
+  "results": [
+    { "key": "default/a.md", "status": "indexed" },
+    { "key": "default/b.md", "status": "processing" }
+  ],
+  "enqueue_errors": []
 }
 ```
 
-Possible statuses: `pending`, `processing`, `completed`, `failed`
+| Field | Description |
+|-------|-------------|
+| `status` | `processing`, `completed`, or `failed` |
+| `phase` | Current pipeline phase (e.g. `ingest`, `enrich`) |
+| `total` | Number of files in the batch |
+| `succeeded` / `failed` / `processed` | Per-file outcomes (sum to `total` once complete) |
+| `results` | Per-file status entries |
+| `enqueue_errors` | Files rejected synchronously (duplicates, invalid keys) — not retried |
+
+**Org isolation:** A `task_id` belongs to exactly one organization. Polling a `task_id` from a different org returns `404 Not Found` (does not leak existence).
+
+Recommended polling: every 2s, with a client-side timeout (e.g. 5 minutes for a 50-file batch). If the task is still processing after the timeout, reuse the same `task_id` to resume polling.
