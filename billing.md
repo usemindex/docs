@@ -36,10 +36,10 @@ Authorization: Bearer <jwt>
 | `seats.max` | Maximum number of team members allowed in the org |
 | `storage.max` | Total bytes allowed in S3 object storage (legacy telemetry field — not the enforced limit; see `documents`) |
 | `documents.max` | Maximum number of documents the org can store |
-| `markdown_size.max` | Maximum bytes of converted markdown allowed per individual document |
+| `markdown_size.max` | Maximum bytes of text (post-conversion) allowed per individual document |
 | `namespaces.max` | Maximum number of namespaces the org can create |
 
-`null` in any limit field means unlimited (typically only applies to the `markdown_size` field for certain custom plans).
+`null` in any limit field means unlimited (typically only applies to the `markdown_size` field for certain custom plans — meaning no text size cap per document).
 
 ---
 

@@ -125,7 +125,7 @@ Limit exceeded errors include additional fields:
 | 402 | Payment Required (plan limit reached or subscription canceled) |
 | 403 | Forbidden |
 | 404 | Not Found |
-| 413 | Payload Too Large (converted markdown exceeds plan cap) |
+| 413 | Payload Too Large (converted text exceeds plan cap) |
 | 422 | Validation Error |
 | 429 | Rate Limited |
 | 502 | Engine Unavailable |
@@ -136,11 +136,11 @@ When a document upload fails — either as a per-file rejection inside a batch (
 
 | Code | HTTP | Description | Recommended action |
 |------|------|-------------|-------------------|
-| `MARKDOWN_TOO_LARGE` | `413` / `202` with errors | The converted markdown of this document exceeds your plan's per-document limit | Split the document into smaller logical units, or upgrade your plan |
+| `MARKDOWN_TOO_LARGE` | `413` / `202` with errors | The converted text of this document exceeds your plan's per-document limit | Split the document into smaller logical units, or upgrade your plan |
 | `DOCUMENT_EXISTS` | `422` | A document with the same key already exists in this namespace | Use `PUT` to overwrite, rename the key, or upload to a different namespace |
 | `INVALID` | `422` | The document failed validation (unsupported format, invalid encoding, etc.) | Check the file type and encoding before retrying |
 
-In batch uploads, files that hit `DOCUMENT_EXISTS` or `INVALID` are listed in `enqueue_errors[]` and do not block the rest of the batch from processing. Files that hit `MARKDOWN_TOO_LARGE` are reported in `enqueue_errors[]` as well — other files in the batch continue normally.
+In batch uploads, files that hit `DOCUMENT_EXISTS` or `INVALID` are listed in `enqueue_errors[]` and do not block the rest of the batch from processing. Files that hit `MARKDOWN_TOO_LARGE` (text size over plan limit) are reported in `enqueue_errors[]` as well — other files in the batch continue normally.
 
 ## Supported File Formats
 
@@ -156,4 +156,4 @@ In batch uploads, files that hit `DOCUMENT_EXISTS` or `INVALID` are listed in `e
 | JSON | `.json` | Good |
 | XML | `.xml` | Good |
 
-Non-Markdown files are automatically converted to Markdown before processing.
+Non-Markdown files are automatically converted to text (Markdown format) before processing.
