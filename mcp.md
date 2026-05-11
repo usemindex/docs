@@ -122,3 +122,13 @@ Upload a document.
 | -32601 | Method not found |
 | -32602 | Tool not found / invalid arguments |
 | -32000 | Business logic error (limits, throttling) |
+
+When `mindex_upload` fails because of a document-level constraint, the error data includes a machine-readable `code` field that follows the same convention as the REST API:
+
+| `code` | Meaning | Action |
+|--------|---------|--------|
+| `MARKDOWN_TOO_LARGE` | Converted markdown exceeds your plan's per-document limit | Split the document or upgrade the plan |
+| `DOCUMENT_EXISTS` | A document with this key already exists | Change the key or use the REST `PUT` endpoint to overwrite |
+| `INVALID` | File type not supported or encoding is invalid | Check the content before retrying |
+
+See [Documents](./documents.md) for the full error shape and per-plan size limits.

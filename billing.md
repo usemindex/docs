@@ -15,16 +15,31 @@ Authorization: Bearer <jwt>
 
 ```json
 {
-  "plan": "free",
+  "plan": "personal",
   "status": "active",
-  "current_period_end": null,
+  "current_period_end": "2026-06-10T13:03:05Z",
+  "cancel_at": null,
   "limits": {
     "seats": { "max": 1, "current": 1 },
-    "storage": { "max": 10485760, "current": 1024000 },
-    "namespaces": { "max": 1, "current": 1 }
+    "storage": { "max": 26843545600, "current": 1024000 },
+    "documents": { "max": 5000, "current": 47 },
+    "markdown_size": { "max": 153600 },
+    "namespaces": { "max": 20, "current": 3 }
   }
 }
 ```
+
+**Limit fields explained:**
+
+| Field | Description |
+|-------|-------------|
+| `seats.max` | Maximum number of team members allowed in the org |
+| `storage.max` | Total bytes allowed in S3 object storage (legacy telemetry field — not the enforced limit; see `documents`) |
+| `documents.max` | Maximum number of documents the org can store |
+| `markdown_size.max` | Maximum bytes of converted markdown allowed per individual document |
+| `namespaces.max` | Maximum number of namespaces the org can create |
+
+`null` in any limit field means unlimited (typically only applies to the `markdown_size` field for certain custom plans).
 
 ---
 
@@ -43,28 +58,52 @@ Authorization: Bearer <jwt>
     {
       "id": "free",
       "contact_sales": false,
-      "limits": { "seats": 1, "storage_gb": 0, "namespaces": 1 }
+      "visibility": "public",
+      "limits": {
+        "seats": 1,
+        "documents": 100,
+        "markdown_size": 30720,
+        "namespaces": 1
+      }
     },
     {
       "id": "personal",
       "contact_sales": false,
-      "limits": { "seats": 1, "storage_gb": 25, "namespaces": 20 }
+      "visibility": "public",
+      "limits": {
+        "seats": 1,
+        "documents": 5000,
+        "markdown_size": 153600,
+        "namespaces": 20
+      }
     },
     {
       "id": "team",
       "contact_sales": false,
-      "limits": { "seats": 15, "storage_gb": 500, "namespaces": null }
+      "visibility": "public",
+      "limits": {
+        "seats": 15,
+        "documents": 15000,
+        "markdown_size": 307200,
+        "namespaces": null
+      }
     },
     {
       "id": "enterprise",
       "contact_sales": true,
-      "limits": { "seats": null, "storage_gb": null, "namespaces": null }
+      "visibility": "public"
     }
   ]
 }
 ```
 
-`null` in limits means unlimited.
+`null` in a plan limit means unlimited (e.g., `namespaces: null` for Team = no namespace cap).
+
+For Enterprise, the `limits` object is omitted entirely. All limits are negotiated individually with sales — contact [support@usemindex.dev](mailto:support@usemindex.dev).
+
+### Visibility filter
+
+Plans carry a `visibility` field. Plans marked `"public"` are always returned. Plans marked `"internal"` (custom plans created for specific organizations) are returned only when the requesting org's active subscription uses that plan. This ensures custom pricing does not leak to other organizations.
 
 ---
 
