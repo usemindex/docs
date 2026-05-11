@@ -47,10 +47,73 @@ curl -X POST https://api.usemindex.dev/api/v1/my-org/documents \
 
 **Supported formats:** `.md`, `.txt`, `.markdown`, `.docx`, `.pptx`, `.xlsx`, `.pdf`, `.html`, `.htm`, `.csv`, `.json`, `.xml`
 
-**Limits:**
-- Max 10MB per file.
-- Max 50 files per batch request. Submit additional batches sequentially for larger sets.
-- Storage cota is checked atomically across the whole batch — if the total exceeds the plan limit, the entire batch is rejected with `402` and nothing is uploaded.
+## Document size limits — important
+
+Mindex enforces **two independent size limits** on every upload. Both must be satisfied:
+
+### 1. Raw upload size
+
+Hard cap of **10 MB per file** at the API layer, regardless of plan. Applies to the file bytes as uploaded (the PDF, DOCX, etc., before any conversion). Larger files are rejected with `422 Unprocessable Entity`.
+
+### 2. Markdown size (post-conversion) — per plan
+
+Mindex converts every file to markdown before processing. The resulting markdown is what gets embedded, chunked, and graphed. This **converted markdown size** is capped per plan:
+
+| Plan | Max markdown per document |
+|------|---------------------------|
+| Free | 50 KB |
+| Personal | 200 KB |
+| Team | 1 MB |
+| Enterprise | 5 MB (or custom) |
+
+Documents whose converted markdown exceeds the plan limit are **rejected per-file** with `MARKDOWN_TOO_LARGE`. Other files in the same batch still process normally.
+
+### Why two limits
+
+The cost of enrichment (embeddings + AI extraction) scales with **post-conversion markdown size**, not the original file. A 5 MB image-heavy PDF might produce 100 KB of markdown text; a 5 MB plain-markdown file produces 5 MB of markdown. The two limits ensure both the network/storage cost (raw upload) and the AI processing cost (markdown size) stay bounded.
+
+### Approximate conversion ratios
+
+| Format | Typical ratio (markdown / source) |
+|--------|-----------------------------------|
+| `.md`, `.txt`, `.markdown` | 1.0× (passthrough) |
+| `.html`, `.htm` | 0.4× – 0.7× (HTML tags stripped) |
+| `.pdf` (text-heavy) | 0.05× – 0.2× |
+| `.pdf` (scanned images) | 0.001× – 0.01× |
+| `.docx` | 0.1× – 0.3× |
+| `.pptx` | 0.05× – 0.1× |
+| `.xlsx` | 0.05× – 0.2× |
+| `.csv`, `.json`, `.xml` | 0.5× – 1.0× |
+
+If you need to upload large content, prefer formats with low expansion ratios (PDF, DOCX) over plain markdown.
+
+### What happens when limits are exceeded
+
+| Condition | HTTP | Code | Action |
+|-----------|------|------|--------|
+| Raw file > 10 MB | `422` | — | File rejected. Other files in batch still processed if API receives them separately. |
+| Markdown > plan limit | `413` (single) / `202` with `enqueue_errors[]` (batch) | `MARKDOWN_TOO_LARGE` | Per-file rejection. Other files in batch continue. CLI shows summary. |
+| Batch > 50 files | `422` | — | Whole request rejected. |
+| Storage cota exceeded | `402` | — | Whole request rejected. |
+
+### `MARKDOWN_TOO_LARGE` error shape
+
+```json
+{
+  "code": "MARKDOWN_TOO_LARGE",
+  "key": "docs/long-pdf.md",
+  "markdown_bytes": 819200,
+  "max_markdown_bytes": 204800,
+  "message": "Document 'long-pdf.md' produces 800.0 KB of markdown text, which exceeds the per-document limit of 200.0 KB."
+}
+```
+
+### What to do if a document is rejected
+
+1. **Split the document** into smaller logical units (chapters, sections) and upload separately.
+2. **Use a denser format**: if you're uploading raw markdown, consider converting to PDF or DOCX (lower expansion ratio).
+3. **Upgrade the plan**: each tier raises the per-document markdown cap (50 KB → 200 KB → 1 MB → 5 MB).
+4. **Contact us** for Enterprise plans with custom limits (`support@usemindex.dev`).
 
 **Response:** `202 Accepted`
 
