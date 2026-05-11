@@ -103,12 +103,12 @@ Limit exceeded errors include additional fields:
 
 ```json
 {
-  "error": "Storage limit exceeded",
-  "limit_type": "storage",
-  "current": 52428800,
-  "max": 52428800,
-  "plan": "free",
-  "upgrade_url": "/billing/checkout"
+  "error": "Document limit reached",
+  "limit_type": "documents",
+  "current": 5000,
+  "max": 5000,
+  "plan": "personal",
+  "upgrade_url": "/billing/plans"
 }
 ```
 
@@ -118,14 +118,29 @@ Limit exceeded errors include additional fields:
 |------|---------|
 | 200 | Success |
 | 201 | Created |
+| 202 | Accepted (async ingest) |
 | 204 | No Content (deleted) |
 | 400 | Bad Request |
 | 401 | Unauthorized |
+| 402 | Payment Required (plan limit reached or subscription canceled) |
 | 403 | Forbidden |
 | 404 | Not Found |
+| 413 | Payload Too Large (converted markdown exceeds plan cap) |
 | 422 | Validation Error |
 | 429 | Rate Limited |
 | 502 | Engine Unavailable |
+
+### Error codes for document upload
+
+When a document upload fails — either as a per-file rejection inside a batch (`enqueue_errors[]`) or as a top-level 4xx response for single-file uploads — the error body includes a machine-readable `code` field:
+
+| Code | HTTP | Description | Recommended action |
+|------|------|-------------|-------------------|
+| `MARKDOWN_TOO_LARGE` | `413` / `202` with errors | The converted markdown of this document exceeds your plan's per-document limit | Split the document into smaller logical units, or upgrade your plan |
+| `DOCUMENT_EXISTS` | `422` | A document with the same key already exists in this namespace | Use `PUT` to overwrite, rename the key, or upload to a different namespace |
+| `INVALID` | `422` | The document failed validation (unsupported format, invalid encoding, etc.) | Check the file type and encoding before retrying |
+
+In batch uploads, files that hit `DOCUMENT_EXISTS` or `INVALID` are listed in `enqueue_errors[]` and do not block the rest of the batch from processing. Files that hit `MARKDOWN_TOO_LARGE` are reported in `enqueue_errors[]` as well — other files in the batch continue normally.
 
 ## Supported File Formats
 

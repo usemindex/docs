@@ -119,3 +119,9 @@ Authorization: Bearer <jwt>
   "user_count": 2
 }
 ```
+
+**Field notes:**
+
+- `storage_bytes` — total bytes stored in S3. This field is retained for telemetry and historical tracking. It is **informational only** — storage is no longer the enforced billing limit. The enforced limit is document count (`documents_count` in the subscription response).
+- `collection_count` — number of namespaces in use.
+- `user_count` — number of members in the organization.

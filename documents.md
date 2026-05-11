@@ -61,10 +61,10 @@ Mindex converts every file to markdown before processing. The resulting markdown
 
 | Plan | Max markdown per document |
 |------|---------------------------|
-| Free | 50 KB |
-| Personal | 200 KB |
-| Team | 1 MB |
-| Enterprise | 5 MB (or custom) |
+| Free | 30 KB |
+| Personal | 150 KB |
+| Team | 300 KB |
+| Enterprise | Custom — [contact sales](mailto:support@usemindex.dev) |
 
 Documents whose converted markdown exceeds the plan limit are **rejected per-file** with `MARKDOWN_TOO_LARGE`. Other files in the same batch still process normally.
 
@@ -94,7 +94,7 @@ If you need to upload large content, prefer formats with low expansion ratios (P
 | Raw file > 10 MB | `422` | — | File rejected. Other files in batch still processed if API receives them separately. |
 | Markdown > plan limit | `413` (single) / `202` with `enqueue_errors[]` (batch) | `MARKDOWN_TOO_LARGE` | Per-file rejection. Other files in batch continue. CLI shows summary. |
 | Batch > 50 files | `422` | — | Whole request rejected. |
-| Storage cota exceeded | `402` | — | Whole request rejected. |
+| Document count cap reached | `402` | — | Whole request rejected. Delete existing docs or upgrade your plan. |
 
 ### `MARKDOWN_TOO_LARGE` error shape
 
@@ -103,8 +103,8 @@ If you need to upload large content, prefer formats with low expansion ratios (P
   "code": "MARKDOWN_TOO_LARGE",
   "key": "docs/long-pdf.md",
   "markdown_bytes": 819200,
-  "max_markdown_bytes": 204800,
-  "message": "Document 'long-pdf.md' produces 800.0 KB of markdown text, which exceeds the per-document limit of 200.0 KB."
+  "max_markdown_bytes": 153600,
+  "message": "Document 'long-pdf.md' produces 800.0 KB of markdown text, which exceeds the per-document limit of 150.0 KB."
 }
 ```
 
@@ -112,8 +112,8 @@ If you need to upload large content, prefer formats with low expansion ratios (P
 
 1. **Split the document** into smaller logical units (chapters, sections) and upload separately.
 2. **Use a denser format**: if you're uploading raw markdown, consider converting to PDF or DOCX (lower expansion ratio).
-3. **Upgrade the plan**: each tier raises the per-document markdown cap (50 KB → 200 KB → 1 MB → 5 MB).
-4. **Contact us** for Enterprise plans with custom limits (`support@usemindex.dev`).
+3. **Upgrade the plan**: each tier raises the per-document markdown cap (30 KB → 150 KB → 300 KB).
+4. **Contact us** for Enterprise plans with custom limits ([support@usemindex.dev](mailto:support@usemindex.dev)).
 
 **Response:** `202 Accepted`
 
@@ -137,7 +137,7 @@ Processing is asynchronous (S3 + Celery enrich). Poll `GET /documents/tasks/:tas
 | `422` | `{"error": "File 'X.exe' type not allowed..."}` | unsupported extension (any file in batch fails the whole request) |
 | `422` | `{"error": "File 'X.md' has invalid UTF-8 encoding"}` | non-UTF-8 in text-extension file |
 | `422` | `{"error": "File 'X' exceeds 10MB limit"}` | file too large |
-| `402` | `{"error": "Storage limit reached", "limit_type": "storage", "current": ..., "max": ..., "plan": ..., "upgrade_url": ...}` | sum of bytes exceeds plan storage cota |
+| `402` | `{"error": "Document limit reached", "limit_type": "documents", "current": ..., "max": ..., "plan": ..., "upgrade_url": ...}` | org has reached the plan's document count cap |
 | `429` | `{"error": "Rate limit exceeded", "retry_after": 60}` | per-org request rate limit hit |
 
 ---
