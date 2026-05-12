@@ -78,8 +78,8 @@ curl -X POST https://api.usemindex.dev/orgs/your-org/api_keys \
 |------|-------------|
 | Free | 30 |
 | Personal | 60 |
-| Team | 120 |
-| Enterprise | 300 |
+| Team | 300 |
+| Enterprise | Custom — [contact sales](mailto:support@usemindex.dev) |
 
 Rate limit headers are included in every response:
 

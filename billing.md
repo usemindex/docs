@@ -82,9 +82,9 @@ Authorization: Bearer <jwt>
       "contact_sales": false,
       "visibility": "public",
       "limits": {
-        "seats": 15,
-        "documents": 15000,
-        "markdown_size": 307200,
+        "seats": 30,
+        "documents": 20000,
+        "markdown_size": 1048576,
         "namespaces": null
       }
     },

@@ -63,7 +63,7 @@ Mindex converts every file to markdown before processing. The resulting text is 
 |------|---------------------------|
 | Free | 30 KB |
 | Personal | 150 KB |
-| Team | 300 KB |
+| Team | 1 MB |
 | Enterprise | Custom — [contact sales](mailto:support@usemindex.dev) |
 
 Documents whose post-conversion text exceeds the plan limit are **rejected per-file** with `MARKDOWN_TOO_LARGE`. Other files in the same batch still process normally.
@@ -112,7 +112,7 @@ If you need to upload large content, prefer formats with low expansion ratios (P
 
 1. **Split the document** into smaller logical units (chapters, sections) and upload separately.
 2. **Use a denser format**: if you're uploading raw text files, consider converting to PDF or DOCX (lower expansion ratio).
-3. **Upgrade the plan**: each tier raises the per-document text size limit (30 KB → 150 KB → 300 KB).
+3. **Upgrade the plan**: each tier raises the per-document text size limit (30 KB → 150 KB → 1 MB).
 4. **Contact us** for Enterprise plans with custom limits ([support@usemindex.dev](mailto:support@usemindex.dev)).
 
 **Response:** `202 Accepted`
